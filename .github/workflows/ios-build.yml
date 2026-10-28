@@ -26,14 +26,10 @@ jobs:
       
         uses: actions/checkout@v4
         
-
-
       - name: Install CMake
       
         run: brew install cmake
         
-
-
       - name: Build llama.cpp XCFramework
       
         shell: bash
@@ -50,8 +46,6 @@ jobs:
           
           cp -R build-apple/llama.xcframework "$GITHUB_WORKSPACE/Frameworks/llama.xcframework"
           
-
-
       - name: Show toolchain
       
         run: |
@@ -60,15 +54,13 @@ jobs:
           
           xcodebuild -showsdks
           
-
-
       - name: Unpack project source
       
         shell: bash
         
         run: |
         
-          unzip -q EstudaOffline_iOS_Updated_Source_v4.zip -d "$RUNNER_TEMP/source"
+          unzip -q EstudaOffline_iOS_Updated_Source_v5.zip -d "$RUNNER_TEMP/source"
           
           PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
           
@@ -82,8 +74,6 @@ jobs:
           
           cp -R "$GITHUB_WORKSPACE/Frameworks/llama.xcframework" "$SRC_DIR/Frameworks/llama.xcframework"
           
-
-
       - name: Archive without Apple signing
       
         run: |
@@ -116,8 +106,6 @@ jobs:
             
             PROVISIONING_PROFILE_SPECIFIER=""
             
-
-
       - name: Package unsigned IPA
       
         shell: bash
@@ -136,8 +124,6 @@ jobs:
           
           shasum -a 256 "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa"
           
-
-
       - name: Upload unsigned IPA and archive
       
         uses: actions/upload-artifact@v4

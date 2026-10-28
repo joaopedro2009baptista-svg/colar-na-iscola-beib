@@ -1,179 +1,91 @@
 name: iOS build
 
 on:
-
   workflow_dispatch:
-  
   push:
-  
     branches: [main]
-    
+
 permissions:
-
   contents: read
-  
+
 jobs:
-
   build-ios:
-  
     runs-on: macos-15
-    
     timeout-minutes: 90
-    
     steps:
-    
       - name: Checkout repository
-      
         uses: actions/checkout@v4
-        
+
       - name: Install CMake
-      
         run: brew install cmake
-        
+
       - name: Extract Eee source
-      
         shell: bash
-        
         run: |
-        
           set -euo pipefail
-          
           rm -rf "$RUNNER_TEMP/eee"
-          
           mkdir -p "$RUNNER_TEMP/eee"
-          
-          unzip -q Eee_FIXED_iOS_Source.zip -d "$RUNNER_TEMP/eee"
-          
+          unzip -q Eee_FINAL_iOS_Source.zip -d "$RUNNER_TEMP/eee"
           test -d "$RUNNER_TEMP/eee/EstudaOffline.xcodeproj"
-          
+          test -f "$RUNNER_TEMP/eee/EstudaOffline/Services/ModelStore.swift"
+          test -f "$RUNNER_TEMP/eee/EstudaOffline/Services/LocalLlamaRuntime.swift"
           echo "SRC_DIR=$RUNNER_TEMP/eee" >> "$GITHUB_ENV"
-          
+
       - name: Build llama.cpp XCFramework
-      
         shell: bash
-        
         run: |
-        
           set -euo pipefail
-          
           git clone --depth 1 https://github.com/ggml-org/llama.cpp.git "$RUNNER_TEMP/llama.cpp"
-          
           cd "$RUNNER_TEMP/llama.cpp"
-          
           ./build-xcframework.sh ios-device
-          
+          test -d build-apple/llama.xcframework
           mkdir -p "$SRC_DIR/Frameworks"
-          
           cp -R build-apple/llama.xcframework "$SRC_DIR/Frameworks/llama.xcframework"
-          
+          test -d "$SRC_DIR/Frameworks/llama.xcframework"
+          echo "llama.cpp commit: $(git rev-parse HEAD)" | tee "$GITHUB_WORKSPACE/build-validation.txt"
+
       - name: Archive unsigned app
-      
         shell: bash
-        
         run: |
-        
           set -euo pipefail
-          
           cd "$SRC_DIR"
-          
-          xcodebuild archive -project EstudaOffline.xcodeproj -scheme EstudaOffline -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO AD_HOC_CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
-          
+          xcodebuild archive -project EstudaOffline.xcodeproj -scheme EstudaOffline -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO AD_HOC_CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER="" 2>&1 | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+          test -d "$RUNNER_TEMP/EstudaOffline.xcarchive"
           APP_PATH="$(find "$RUNNER_TEMP/EstudaOffline.xcarchive" -type d -name 'EstudaOffline.app' -print -quit)"
-          
           test -n "$APP_PATH"
-          
+          test -s "$APP_PATH/EstudaOffline"
+          test -f "$APP_PATH/Info.plist"
           echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
-          
-      - name: Package unsigned IPA
-      
+          echo "Archive app: $APP_PATH" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+
+      - name: Package and validate unsigned IPA
         shell: bash
-        
         run: |
-        
           set -euo pipefail
-          
-          rm -rf "$RUNNER_TEMP/Payload"
-          
-          mkdir -p "$RUNNER_TEMP/Payload"
-          
+          rm -rf "$RUNNER_TEMP/Payload" "$RUNNER_TEMP/ipa-validation"
+          mkdir -p "$RUNNER_TEMP/Payload" "$RUNNER_TEMP/ipa-validation"
           cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
-          
-          (cd "$RUNNER_TEMP" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
-          
-          shasum -a 256 "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa"
-          
-      - name: Upload IPA and archive
-      
+          (cd "$RUNNER_TEMP" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" Payload)
+          unzip -t "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+          unzip -q "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" -d "$RUNNER_TEMP/ipa-validation"
+          APP="$RUNNER_TEMP/ipa-validation/Payload/EstudaOffline.app"
+          test -s "$APP/EstudaOffline"
+          test -f "$APP/Info.plist"
+          plutil -lint "$APP/Info.plist"
+          test -f "$APP/CurriculumKnowledge.md"
+          test -d "$APP"
+          unzip -l "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+          du -h "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+          shasum -a 256 "$GITHUB_WORKSPACE/caminhoneiro-unsigned.ipa" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+          echo "IPA validation: passed; model remains first-run download by design." | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
+
+      - name: Upload IPA, archive and validation logs
         uses: actions/upload-artifact@v4
-        
         with:
-        
-          name: EstudaOffline-Eee-unsigned
-          
+          name: caminhoneiro-iOS-unsigned
           path: |
-          
-            EstudaOffline-unsigned.ipa
-            
+            caminhoneiro-unsigned.ipa
+            build-validation.txt
             ${{ runner.temp }}/EstudaOffline.xcarchive
-            
           if-no-files-found: error
-          
           retention-days: 14
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

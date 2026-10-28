@@ -56,7 +56,8 @@ jobs:
           test -s "$APP_PATH/EstudaOffline"
           test -f "$APP_PATH/Info.plist"
           test -f "$APP_PATH/Frameworks/llama.framework/llama"
-          strings "$APP_PATH/EstudaOffline" | grep -q '@rpath/llama.framework/llama'
+          otool -L "$APP_PATH/EstudaOffline" | grep -q 'llama.framework/llama'
+          find "$APP_PATH/Frameworks/llama.framework" -maxdepth 1 -type f -print | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
           echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
           echo "Archive app: $APP_PATH" | tee -a "$GITHUB_WORKSPACE/build-validation.txt"
 
@@ -74,7 +75,7 @@ jobs:
           test -s "$APP/EstudaOffline"
           test -f "$APP/Info.plist"
           test -f "$APP/Frameworks/llama.framework/llama"
-          strings "$APP/EstudaOffline" | grep -q '@rpath/llama.framework/llama'
+          otool -L "$APP/EstudaOffline" | grep -q 'llama.framework/llama'
           plutil -lint "$APP/Info.plist"
           test -f "$APP/CurriculumKnowledge.md"
           test -d "$APP"

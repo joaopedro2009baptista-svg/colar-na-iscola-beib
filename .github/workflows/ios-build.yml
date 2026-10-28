@@ -70,9 +70,17 @@ jobs:
         
           unzip -q EstudaOffline_iOS_Updated_Source_v3.zip -d "$RUNNER_TEMP/source"
           
-          mkdir -p "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source/Frameworks"
+          PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
           
-          cp -R "$GITHUB_WORKSPACE/Frameworks/llama.xcframework" "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source/Frameworks/llama.xcframework"
+          test -n "$PROJECT_PATH"
+          
+          SRC_DIR="$(dirname "$PROJECT_PATH")"
+          
+          echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
+          
+          mkdir -p "$SRC_DIR/Frameworks"
+          
+          cp -R "$GITHUB_WORKSPACE/Frameworks/llama.xcframework" "$SRC_DIR/Frameworks/llama.xcframework"
           
 
 
@@ -80,7 +88,7 @@ jobs:
       
         run: |
         
-          cd "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source"
+          cd "$SRC_DIR"
           
           xcodebuild archive \
           
@@ -146,6 +154,10 @@ jobs:
             
           if-no-files-found: error
           
+
+
+
+
 
 
 

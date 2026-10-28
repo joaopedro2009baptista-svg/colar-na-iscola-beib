@@ -8,6 +8,10 @@ on:
   
     branches: [main]
     
+permissions:
+
+  contents: read
+  
 jobs:
 
   build-ios:
@@ -26,7 +30,7 @@ jobs:
       
         run: brew install cmake
         
-      - name: Extract FIXED4 source
+      - name: Extract Eee source
       
         shell: bash
         
@@ -34,19 +38,15 @@ jobs:
         
           set -euo pipefail
           
-          rm -rf "$RUNNER_TEMP/source"
+          rm -rf "$RUNNER_TEMP/eee"
           
-          mkdir -p "$RUNNER_TEMP/source"
+          mkdir -p "$RUNNER_TEMP/eee"
           
-          unzip -q EstudaOffline_iOS_Updated_Source_v5_FIXED4.zip -d "$RUNNER_TEMP/source"
+          unzip -q Eee_FIXED_iOS_Source.zip -d "$RUNNER_TEMP/eee"
           
-          PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
+          test -d "$RUNNER_TEMP/eee/EstudaOffline.xcodeproj"
           
-          test -n "$PROJECT_PATH"
-          
-          SRC_DIR="$(dirname "$PROJECT_PATH")"
-          
-          echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
+          echo "SRC_DIR=$RUNNER_TEMP/eee" >> "$GITHUB_ENV"
           
       - name: Build llama.cpp XCFramework
       
@@ -66,15 +66,7 @@ jobs:
           
           cp -R build-apple/llama.xcframework "$SRC_DIR/Frameworks/llama.xcframework"
           
-      - name: Show toolchain
-      
-        run: |
-        
-          xcodebuild -version
-          
-          xcodebuild -showsdks
-          
-      - name: Archive without Apple signing
+      - name: Archive unsigned app
       
         shell: bash
         
@@ -100,11 +92,13 @@ jobs:
         
           set -euo pipefail
           
+          rm -rf "$RUNNER_TEMP/Payload"
+          
           mkdir -p "$RUNNER_TEMP/Payload"
           
           cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
           
-          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
+          (cd "$RUNNER_TEMP" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
           
           shasum -a 256 "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa"
           
@@ -114,7 +108,7 @@ jobs:
         
         with:
         
-          name: EstudaOffline-iOS-unsigned-fixed4
+          name: EstudaOffline-Eee-unsigned
           
           path: |
           
@@ -126,10 +120,6 @@ jobs:
           
           retention-days: 14
           
-
-
-
-
 
 
 

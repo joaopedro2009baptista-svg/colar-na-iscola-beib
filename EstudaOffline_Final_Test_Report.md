@@ -1,6 +1,6 @@
 
-## Diagnóstico do segundo vídeo
+## Otimização para provas longas
 
-O crash ocorria ao tocar em `Resolver todas as questões` depois do OCR. O runtime criava `llama_batch` com capacidade de apenas 512 tokens, mas o texto OCR e o prompt curricular podiam ultrapassar esse limite. `addToken` então escrevia fora dos buffers nativos e o iOS encerrava o processo sem mensagem. A capacidade foi ajustada para 4096, igual ao contexto máximo, e a geração agora para antes de ultrapassar o contexto.
+O fluxo de resolução foi otimizado para não executar revisões duplicadas em todas as questões. A extração usa no máximo 700 tokens e não inclui a base curricular; cada questão usa no máximo 280 tokens, e uma segunda tentativa de 220 tokens só ocorre quando a opção é ilegível ou o JSON não contém uma alternativa. O contexto curricular por questão foi reduzido para 4.500 caracteres, o OCR é limitado a 24.000 caracteres e a resolução limita-se às primeiras 30 questões por execução. A tela agora oferece `Cancelar resolução` e verifica cancelamento entre questões.
 
-As imagens selecionadas também são reduzidas para no máximo 2048 px antes do Vision OCR, diminuindo o pico de memória e mantendo resolução suficiente para texto impresso. Redação e Chat agora têm foco explícito, dismiss interativo e botão `Concluído` na barra do teclado.
+Esses limites reduzem o tempo e o consumo de memória no iPhone, mas a inferência local de um modelo de 4B parâmetros ainda depende do desempenho do dispositivo.

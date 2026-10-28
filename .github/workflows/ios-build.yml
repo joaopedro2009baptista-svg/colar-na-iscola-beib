@@ -68,7 +68,7 @@ jobs:
         
         run: |
         
-          unzip -q EstudaOffline_iOS_Updated_Source_v3.zip -d "$RUNNER_TEMP/source"
+          unzip -q EstudaOffline_iOS_Updated_Source_v4.zip -d "$RUNNER_TEMP/source"
           
           PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
           

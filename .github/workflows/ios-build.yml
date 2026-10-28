@@ -76,7 +76,7 @@ jobs:
           
           cd "$SRC_DIR"
           
-          xcodebuild archive -project EstudaOffline.xcodeproj -target EstudaOffline -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO AD_HOC_CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
+          xcodebuild archive -project EstudaOffline.xcodeproj -scheme EstudaOffline -target EstudaOffline -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO AD_HOC_CODE_SIGNING_ALLOWED=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER=""
           
           APP_PATH="$(find "$RUNNER_TEMP/EstudaOffline.xcarchive" -type d -name 'EstudaOffline.app' -print -quit)"
           

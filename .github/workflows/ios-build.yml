@@ -26,7 +26,7 @@ jobs:
       
         run: brew install cmake
         
-      - name: Extract FIXED source
+      - name: Extract FIXED2 source
       
         shell: bash
         
@@ -38,7 +38,7 @@ jobs:
           
           mkdir -p "$RUNNER_TEMP/source"
           
-          unzip -q EstudaOffline_iOS_Updated_Source_v5_FIXED.zip -d "$RUNNER_TEMP/source"
+          unzip -q EstudaOffline_iOS_Updated_Source_v5_FIXED2.zip -d "$RUNNER_TEMP/source"
           
           PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
           
@@ -47,8 +47,6 @@ jobs:
           SRC_DIR="$(dirname "$PROJECT_PATH")"
           
           echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
-          
-          echo "Using source: $SRC_DIR"
           
       - name: Build llama.cpp XCFramework
       
@@ -138,7 +136,7 @@ jobs:
         
         with:
         
-          name: EstudaOffline-iOS-unsigned-fixed
+          name: EstudaOffline-iOS-unsigned-fixed2
           
           path: |
           
@@ -150,7 +148,6 @@ jobs:
           
           retention-days: 14
           
-
 
 
 

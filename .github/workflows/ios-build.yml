@@ -98,7 +98,13 @@ jobs:
             
             CODE_SIGNING_REQUIRED=NO \
             
-            AD_HOC_CODE_SIGNING_ALLOWED=NO
+            AD_HOC_CODE_SIGNING_ALLOWED=NO \
+            
+            CODE_SIGN_IDENTITY="" \
+            
+            DEVELOPMENT_TEAM="" \
+            
+            PROVISIONING_PROFILE_SPECIFIER=""
             
 
 
@@ -138,6 +144,9 @@ jobs:
             
           if-no-files-found: error
           
+
+
+
 
 
 

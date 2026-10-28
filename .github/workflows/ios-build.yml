@@ -1,7 +1,5 @@
 name: iOS build
 
-
-
 on:
 
   workflow_dispatch:
@@ -10,19 +8,17 @@ on:
   
     branches: [main]
     
-
-
 jobs:
 
-  build-unsigned-ipa:
+  build-ios:
   
     runs-on: macos-15
     
-    timeout-minutes: 45
+    timeout-minutes: 90
     
     steps:
     
-      - name: Checkout
+      - name: Checkout repository
       
         uses: actions/checkout@v4
         
@@ -30,37 +26,19 @@ jobs:
       
         run: brew install cmake
         
-      - name: Build llama.cpp XCFramework
+      - name: Extract FIXED source
       
         shell: bash
         
         run: |
         
-          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git "$RUNNER_TEMP/llama.cpp"
+          set -euo pipefail
           
-          cd "$RUNNER_TEMP/llama.cpp"
+          rm -rf "$RUNNER_TEMP/source"
           
-          ./build-xcframework.sh ios-device
+          mkdir -p "$RUNNER_TEMP/source"
           
-          mkdir -p "$GITHUB_WORKSPACE/Frameworks"
-          
-          cp -R build-apple/llama.xcframework "$GITHUB_WORKSPACE/Frameworks/llama.xcframework"
-          
-      - name: Show toolchain
-      
-        run: |
-        
-          xcodebuild -version
-          
-          xcodebuild -showsdks
-          
-      - name: Unpack project source
-      
-        shell: bash
-        
-        run: |
-        
-          unzip -q EstudaOffline_iOS_Updated_Source_v5.zip -d "$RUNNER_TEMP/source"
+          unzip -q EstudaOffline_iOS_Updated_Source_v5_FIXED.zip -d "$RUNNER_TEMP/source"
           
           PROJECT_PATH="$(find "$RUNNER_TEMP/source" -name EstudaOffline.xcodeproj -type d -print -quit)"
           
@@ -70,14 +48,42 @@ jobs:
           
           echo "SRC_DIR=$SRC_DIR" >> "$GITHUB_ENV"
           
+          echo "Using source: $SRC_DIR"
+          
+      - name: Build llama.cpp XCFramework
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
+          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git "$RUNNER_TEMP/llama.cpp"
+          
+          cd "$RUNNER_TEMP/llama.cpp"
+          
+          ./build-xcframework.sh ios-device
+          
           mkdir -p "$SRC_DIR/Frameworks"
           
-          cp -R "$GITHUB_WORKSPACE/Frameworks/llama.xcframework" "$SRC_DIR/Frameworks/llama.xcframework"
+          cp -R build-apple/llama.xcframework "$SRC_DIR/Frameworks/llama.xcframework"
           
-      - name: Archive without Apple signing
+      - name: Show toolchain
       
         run: |
         
+          xcodebuild -version
+          
+          xcodebuild -showsdks
+          
+      - name: Archive without Apple signing
+      
+        shell: bash
+        
+        run: |
+        
+          set -euo pipefail
+          
           cd "$SRC_DIR"
           
           xcodebuild archive \
@@ -90,6 +96,8 @@ jobs:
             
             -sdk iphoneos \
             
+            -destination 'generic/platform=iOS' \
+            
             -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" \
             
             CODE_SIGNING_ALLOWED=NO \
@@ -100,37 +108,37 @@ jobs:
             
             CODE_SIGN_STYLE=Manual \
             
-            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_IDENTITY="" \
             
             DEVELOPMENT_TEAM="" \
             
             PROVISIONING_PROFILE_SPECIFIER=""
             
+          test -d "$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app"
+          
       - name: Package unsigned IPA
       
         shell: bash
         
         run: |
         
-          APP="$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app"
-          
-          test -d "$APP"
+          set -euo pipefail
           
           mkdir -p "$RUNNER_TEMP/Payload"
           
-          cp -R "$APP" "$RUNNER_TEMP/Payload/"
+          cp -R "$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app" "$RUNNER_TEMP/Payload/"
           
           (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
           
           shasum -a 256 "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa"
           
-      - name: Upload unsigned IPA and archive
+      - name: Upload IPA and archive
       
         uses: actions/upload-artifact@v4
         
         with:
         
-          name: EstudaOffline-iOS-unsigned
+          name: EstudaOffline-iOS-unsigned-fixed
           
           path: |
           
@@ -140,6 +148,15 @@ jobs:
             
           if-no-files-found: error
           
+          retention-days: 14
+          
+
+
+
+
+
+
+
 
 
 

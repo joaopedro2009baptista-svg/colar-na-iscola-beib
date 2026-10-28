@@ -1,0 +1,175 @@
+name: iOS build
+
+
+
+on:
+
+  workflow_dispatch:
+  
+  push:
+  
+    branches: [main]
+    
+
+
+jobs:
+
+  build-unsigned-ipa:
+  
+    runs-on: macos-15
+    
+    timeout-minutes: 45
+    
+    steps:
+    
+      - name: Checkout
+      
+        uses: actions/checkout@v4
+        
+
+
+      - name: Install CMake
+      
+        run: brew install cmake
+        
+
+
+      - name: Build llama.cpp XCFramework
+      
+        shell: bash
+        
+        run: |
+        
+          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git "$RUNNER_TEMP/llama.cpp"
+          
+          cd "$RUNNER_TEMP/llama.cpp"
+          
+          ./build-xcframework.sh ios-device
+          
+          mkdir -p "$GITHUB_WORKSPACE/Frameworks"
+          
+          cp -R build-apple/llama.xcframework "$GITHUB_WORKSPACE/Frameworks/llama.xcframework"
+          
+
+
+      - name: Show toolchain
+      
+        run: |
+        
+          xcodebuild -version
+          
+          xcodebuild -showsdks
+          
+
+
+      - name: Archive without Apple signing
+      
+        run: |
+        
+          xcodebuild archive \
+          
+            -project EstudaOffline.xcodeproj \
+            
+            -target EstudaOffline \
+            
+            -configuration Release \
+            
+            -sdk iphoneos \
+            
+            -archivePath "$RUNNER_TEMP/EstudaOffline.xcarchive" \
+            
+            CODE_SIGNING_ALLOWED=NO \
+            
+            CODE_SIGNING_REQUIRED=NO \
+            
+            AD_HOC_CODE_SIGNING_ALLOWED=NO
+            
+
+
+      - name: Package unsigned IPA
+      
+        shell: bash
+        
+        run: |
+        
+          APP="$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app"
+          
+          test -d "$APP"
+          
+          mkdir -p "$RUNNER_TEMP/Payload"
+          
+          cp -R "$APP" "$RUNNER_TEMP/Payload/"
+          
+          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
+          
+          shasum -a 256 "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa"
+          
+
+
+      - name: Upload unsigned IPA and archive
+      
+        uses: actions/upload-artifact@v4
+        
+        with:
+        
+          name: EstudaOffline-iOS-unsigned
+          
+          path: |
+          
+            EstudaOffline-unsigned.ipa
+            
+            ${{ runner.temp }}/EstudaOffline.xcarchive
+            
+          if-no-files-found: error
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

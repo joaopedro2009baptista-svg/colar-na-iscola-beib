@@ -100,7 +100,9 @@ jobs:
             
             AD_HOC_CODE_SIGNING_ALLOWED=NO \
             
-            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_STYLE=Manual \
+            
+            CODE_SIGN_IDENTITY=- \
             
             DEVELOPMENT_TEAM="" \
             
@@ -144,6 +146,7 @@ jobs:
             
           if-no-files-found: error
           
+
 
 
 

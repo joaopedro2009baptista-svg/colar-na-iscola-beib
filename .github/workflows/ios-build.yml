@@ -112,7 +112,11 @@ jobs:
             
             PROVISIONING_PROFILE_SPECIFIER=""
             
-          test -d "$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app"
+          APP_PATH="$(find "$RUNNER_TEMP/EstudaOffline.xcarchive" -type d -name 'EstudaOffline.app' -print -quit)"
+          
+          test -n "$APP_PATH"
+          
+          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
           
       - name: Package unsigned IPA
       
@@ -124,7 +128,7 @@ jobs:
           
           mkdir -p "$RUNNER_TEMP/Payload"
           
-          cp -R "$RUNNER_TEMP/EstudaOffline.xcarchive/Products/Applications/EstudaOffline.app" "$RUNNER_TEMP/Payload/"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
           
           (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/EstudaOffline-unsigned.ipa" Payload)
           
@@ -148,6 +152,8 @@ jobs:
           
           retention-days: 14
           
+
+
 
 
 

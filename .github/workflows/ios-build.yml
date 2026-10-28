@@ -62,10 +62,26 @@ jobs:
           
 
 
+      - name: Unpack project source
+      
+        shell: bash
+        
+        run: |
+        
+          unzip -q EstudaOffline_iOS_Updated_Source_v2.zip -d "$RUNNER_TEMP/source"
+          
+          mkdir -p "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source/Frameworks"
+          
+          cp -R "$GITHUB_WORKSPACE/Frameworks/llama.xcframework" "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source/Frameworks/llama.xcframework"
+          
+
+
       - name: Archive without Apple signing
       
         run: |
         
+          cd "$RUNNER_TEMP/source/EstudaOffline_iOS_Complete_Source"
+          
           xcodebuild archive \
           
             -project EstudaOffline.xcodeproj \
@@ -122,6 +138,13 @@ jobs:
             
           if-no-files-found: error
           
+
+
+
+
+
+
+
 
 
 
